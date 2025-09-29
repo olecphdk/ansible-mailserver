@@ -1,0 +1,23 @@
+- name: Enable EPEL repository
+  dnf:
+    name: epel-release
+    state: present
+
+- name: Update all packages
+  dnf:
+    name: "*"
+    state: latest
+
+- name: Install base packages
+  dnf:
+    name:
+      - ca-certificates
+      - curl
+      - git
+      - vim
+      - rsync
+      - net-tools
+      - bind-utils
+      - jq
+      - policycoreutils-python-utils
+    state: present

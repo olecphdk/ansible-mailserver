@@ -1,0 +1,53 @@
+- name: Install OpenDKIM and tools
+  dnf:
+    name: 
+      - opendkim
+      - opendkim-tools
+    state: present
+
+- name: Create key dir
+  file:
+    path: "{{ opendkim_key_dir }}"
+    state: directory
+    owner: opendkim
+    group: opendkim
+    mode: '0750'
+
+- name: Generate DKIM key
+  command: >
+    opendkim-genkey -b 2048 -h rsa-sha256 -r
+    -s {{ opendkim_selector }}
+    -d {{ primary_domain }}
+  args:
+    chdir: "{{ opendkim_key_dir }}"
+    creates: "{{ opendkim_key_dir }}/{{ opendkim_selector }}.private"
+
+- name: Set key perms
+  file:
+    path: "{{ opendkim_key_dir }}/{{ opendkim_selector }}.private"
+    owner: opendkim
+    group: opendkim
+    mode: '0600'
+
+- name: Configure OpenDKIM
+  copy:
+    dest: /etc/opendkim.conf
+    content: |
+      Syslog                  yes
+      UMask                   002
+      OversignHeaders         From
+      Domain                  {{ primary_domain }}
+      KeyFile                 {{ opendkim_key_dir }}/{{ opendkim_selector }}.private
+      Selector                {{ opendkim_selector }}
+      Socket                  {{ opendkim_socket }}
+      Canonicalization        relaxed/simple
+      Mode                    sv
+      SubDomains              no
+      AutoRestart             yes
+      Background              yes
+
+- name: Enable OpenDKIM
+  service:
+    name: opendkim
+    state: started
+    enabled: true

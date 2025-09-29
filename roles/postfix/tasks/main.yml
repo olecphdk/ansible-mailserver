@@ -1,0 +1,45 @@
+- name: Install Postfix with map support
+  dnf:
+    name:
+      - postfix
+      - lmdb      # giver map/dictionary support til hash/db
+    state: present
+
+- name: Ensure mailname file
+  copy:
+    dest: /etc/mailname
+    content: "{{ primary_domain }}\n"
+
+- name: Deploy main.cf
+  template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Postfix
+
+- name: Ensure /etc/aliases database exists
+  command: newaliases
+  args:
+    creates: /etc/aliases.db
+
+- name: Ensure Postfix running
+  service:
+    name: postfix
+    state: started
+    enabled: true
+
+- name: Enable submission service (587) in master.cf
+  blockinfile:
+    path: /etc/postfix/master.cf
+    block: |
+      submission inet n       -       n       -       -       smtpd
+        -o syslog_name=postfix/submission
+        -o smtpd_tls_security_level=encrypt
+        -o smtpd_sasl_auth_enable=yes
+        -o smtpd_tls_auth_only=yes
+        -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+        -o milter_macro_daemon_name=ORIGINATING
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - submission service"
+  notify: Restart Postfix

@@ -1,0 +1,4 @@
+- name: Restart OpenDKIM
+  service:
+    name: opendkim
+    state: restarted

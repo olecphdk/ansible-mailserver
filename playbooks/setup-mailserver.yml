@@ -1,0 +1,25 @@
+- name: Provision self-hosted mailserver on AlmaLinux (Postfix + Dovecot + Certbot + OpenDKIM + firewalld + fail2ban)
+  hosts: mailserver
+  become: yes
+  vars_files:
+    - ../group_vars/all.yml
+
+  tasks:
+    - name: Ensure hostname is set
+      ansible.builtin.hostname:
+        name: "{{ mail_domain }}"
+
+    - name: Ensure /etc/hosts has our hostname
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.1\.1\s+'
+        line: "127.0.1.1 {{ mail_domain }} {{ mail_domain.split('.')[0] }}"
+        create: yes
+
+  roles:
+    - role: common
+    - role: security
+    - role: certbot
+    - role: postfix
+    - role: dovecot
+    - role: opendkim

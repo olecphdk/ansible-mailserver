@@ -1,0 +1,60 @@
+- name: Bootstrap local admin user and harden SSH
+  hosts: mailserver
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Ensure Python 3 exists (for Ansible modules)
+      raw: test -x /usr/bin/python3 || (dnf -y install python3)
+      changed_when: false
+
+  vars:
+    new_user: ole
+    # Indsæt din offentlige nøgle her (ÉN LINJE præcis som i ~/.ssh/id_ed25519.pub)
+    new_user_pubkey: "ssh-ed25519 AAAA...REPLACE_ME... ole@dinlaptop"
+
+  tasks:
+    - name: Create user
+      user:
+        name: "{{ new_user }}"
+        groups: wheel
+        append: true
+        shell: /bin/bash
+        create_home: true
+
+    - name: Authorize SSH key
+      authorized_key:
+        user: "{{ new_user }}"
+        state: present
+        key: "{{ new_user_pubkey }}"
+
+    - name: Lock password login for the user (SSH keys only)
+      user:
+        name: "{{ new_user }}"
+        password_lock: true
+
+    - name: Allow wheel sudo without password (optional)
+      copy:
+        dest: /etc/sudoers.d/99-wheel-nopasswd
+        mode: "0440"
+        content: "%wheel ALL=(ALL) NOPASSWD: ALL"
+
+    - name: "Harden SSH: disable root/password login"
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.re }}"
+        line: "{{ item.line }}"
+        backrefs: yes
+      loop:
+        - { re: '^#?PasswordAuthentication\s+.*', line: 'PasswordAuthentication no' }
+        - { re: '^#?PermitRootLogin\s+.*',      line: 'PermitRootLogin no' }
+
+    - name: Reload sshd
+      service:
+        name: sshd
+        state: reloaded
+
+    - name: SELinux context fix for ~/.ssh (if SELinux is enforcing)
+      command: "restorecon -R /home/{{ new_user }}/.ssh"
+      changed_when: false
+

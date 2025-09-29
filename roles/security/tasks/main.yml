@@ -1,0 +1,60 @@
+- name: Install firewalld and fail2ban
+  dnf:
+    name:
+      - firewalld
+      - fail2ban
+    state: present
+
+- name: Enable and start firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Allow required ports in firewalld
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: yes
+  loop: "{{ open_ports | default([22,25,80,587,993]) }}"
+
+- name: Configure fail2ban jails for SSH, Postfix and Dovecot
+  copy:
+    dest: /etc/fail2ban/jail.d/slushice.conf
+    content: |
+      [sshd]
+      enabled = true
+      port    = ssh
+      logpath = %(sshd_log)s
+      backend = systemd
+      maxretry = {{ fail2ban_maxretry }}
+
+      [postfix]
+      enabled  = true
+      port     = smtp,ssmtp,submission
+      logpath  = /var/log/maillog
+      backend  = systemd
+      maxretry = {{ fail2ban_maxretry }}
+
+      [postfix-sasl]
+      enabled  = true
+      port     = smtp,ssmtp,submission
+      logpath  = /var/log/maillog
+      backend  = systemd
+      maxretry = {{ fail2ban_maxretry }}
+
+      [dovecot]
+      enabled = true
+      port    = pop3,pop3s,imap,imaps,submission,465,sieve
+      logpath = /var/log/maillog
+      backend = systemd
+      maxretry = {{ fail2ban_maxretry }}
+  notify: Restart fail2ban
+
+- name: Ensure fail2ban is running
+  service:
+    name: fail2ban
+    state: started
+    enabled: true
+

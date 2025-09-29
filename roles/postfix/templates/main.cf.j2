@@ -1,0 +1,31 @@
+# {{ ansible_managed }}
+myhostname = {{ mail_domain }}
+mydomain = {{ primary_domain }}
+myorigin = $mydomain
+mydestination = {{ postfix_mydestination | join(", ") }}
+mynetworks = {{ postfix_mynetworks }}
+inet_interfaces = all
+inet_protocols = ipv4
+message_size_limit = {{ postfix_message_size_limit }}
+mailbox_size_limit = 0
+append_dot_mydomain = no
+mailbox_transport = lmtp:unix:private/dovecot-lmtp
+
+# TLS
+smtpd_tls_cert_file = /etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem
+smtpd_tls_key_file  = /etc/letsencrypt/live/{{ mail_domain }}/privkey.pem
+smtpd_use_tls = yes
+smtpd_tls_security_level = may
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_security_options = noanonymous
+
+# Restrictions
+smtpd_helo_required = yes
+smtpd_client_restrictions = permit_sasl_authenticated, reject_unknown_client
+smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
+smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
+
+alias_maps = lmdb:/etc/aliases
+alias_database = lmdb:/etc/aliases

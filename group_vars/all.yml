@@ -1,0 +1,32 @@
+mail_domain: "slushice.femto.dk"
+primary_domain: "slushice.femto.dk"
+postmaster_email: "postmaster@slushice.femto.dk"
+letsencrypt_email: "ole@slushice.femto.dk"
+
+open_ports:
+  - 22
+  - 25
+  - 80
+  - 587
+  - 993
+
+postfix_mynetworks: "127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
+postfix_message_size_limit: 20240000
+postfix_rbls:
+  - "zen.spamhaus.org"
+  - "bl.spamcop.net"
+postfix_mydestination:
+  - "{{ mail_domain }}"
+  - "localhost"
+
+dovecot_mail_location: "maildir:~/Maildir"
+dovecot_ssl_cert: "/etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem"
+dovecot_ssl_key: "/etc/letsencrypt/live/{{ mail_domain }}/privkey.pem"
+
+opendkim_selector: "mail2025"
+opendkim_socket: "inet:8891@localhost"
+opendkim_key_dir: "/etc/opendkim/keys/{{ primary_domain }}"
+
+fail2ban_bantime: "1h"
+fail2ban_findtime: "10m"
+fail2ban_maxretry: 6

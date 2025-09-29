@@ -1,0 +1,84 @@
+- name: Install Dovecot
+  dnf:
+    name:
+      - dovecot
+      - dovecot-pigeonhole
+    state: present
+
+- name: Configure mail location
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-mail.conf
+    regexp: '^mail_location ='
+    line: 'mail_location = {{ dovecot_mail_location }}'
+
+- name: Enable system auth and username format
+  blockinfile:
+    path: /etc/dovecot/conf.d/10-auth.conf
+    block: |
+      auth_username_format = %n
+      !include auth-system.conf.ext
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - AUTH CONFIG"
+  notify: Restart Dovecot
+
+- name: Configure SSL certs
+  blockinfile:
+    path: /etc/dovecot/conf.d/10-ssl.conf
+    block: |
+      ssl = required
+      ssl_cert = <{{ dovecot_ssl_cert }}
+      ssl_key  = <{{ dovecot_ssl_key }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - SSL CONFIG"
+  notify: Restart Dovecot
+
+- name: Expose Dovecot auth socket for Postfix
+  blockinfile:
+    path: /etc/dovecot/conf.d/10-master.conf
+    block: |
+      service auth {
+        unix_listener auth-userdb {
+          mode = 0600
+          user = dovecot
+          group = dovecot
+        }
+
+        # Postfix smtp-auth
+        unix_listener /var/spool/postfix/private/auth {
+          mode = 0660
+          user = dovecot
+          group = postfix
+        }
+      }
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - AUTH SOCKET"
+  notify: Restart Dovecot
+
+- name: Enable LMTP service for Postfix in Dovecot
+  blockinfile:
+    path: /etc/dovecot/conf.d/10-master.conf
+    block: |
+      service lmtp {
+        unix_listener /var/spool/postfix/private/dovecot-lmtp {
+          mode = 0600
+          user = postfix
+          group = postfix
+        }
+      }
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - LMTP for Postfix"
+  notify: Restart Dovecot
+
+- name: Ensure Maildir exists for system users
+  command: "doveadm mailbox create -u {{ item }} INBOX"
+  become: true
+  become_user: "{{ item }}"
+  loop:
+    - ole
+    # - kia
+    # - arthur
+  args:
+    creates: "/home/{{ item }}/Maildir"
+
+- name: Ensure Dovecot is running and enabled
+  service:
+    name: dovecot
+    state: started
+    enabled: true
+

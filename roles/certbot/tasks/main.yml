@@ -1,0 +1,24 @@
+- name: Install certbot
+  dnf:
+    name: certbot
+    state: present
+
+- name: Obtain LE cert via standalone
+  command: >
+    certbot certonly --standalone --agree-tos --non-interactive
+    --email {{ letsencrypt_email }}
+    -d {{ mail_domain }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem"
+  notify:
+    - Reload Postfix
+    - Reload Dovecot
+
+- name: Deploy hook for renewals
+  copy:
+    dest: /etc/letsencrypt/renewal-hooks/deploy/reload-mail.sh
+    mode: '0755'
+    content: |
+      #!/bin/sh
+      systemctl reload postfix || true
+      systemctl reload dovecot || true
