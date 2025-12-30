@@ -8,7 +8,10 @@
 - name: Ensure mailname file
   copy:
     dest: /etc/mailname
-    content: "{{ primary_domain }}\n"
+    content: "{{ mail_domain }}\n"
+    owner: root
+    group: root
+    mode: "0644"
 
 - name: Deploy main.cf
   template:

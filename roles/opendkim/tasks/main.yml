@@ -1,13 +1,13 @@
 - name: Install OpenDKIM and tools
   dnf:
-    name: 
+    name:
       - opendkim
       - opendkim-tools
     state: present
 
 - name: Create key dir
   file:
-    path: "{{ opendkim_key_dir }}"
+    path: "/etc/opendkim/keys/{{ mail_domain }}"
     state: directory
     owner: opendkim
     group: opendkim
@@ -17,14 +17,14 @@
   command: >
     opendkim-genkey -b 2048 -h rsa-sha256 -r
     -s {{ opendkim_selector }}
-    -d {{ primary_domain }}
+    -d {{ mail_domain }}
   args:
-    chdir: "{{ opendkim_key_dir }}"
-    creates: "{{ opendkim_key_dir }}/{{ opendkim_selector }}.private"
+    chdir: "/etc/opendkim/keys/{{ mail_domain }}"
+    creates: "/etc/opendkim/keys/{{ mail_domain }}/{{ opendkim_selector }}.private"
 
 - name: Set key perms
   file:
-    path: "{{ opendkim_key_dir }}/{{ opendkim_selector }}.private"
+    path: "/etc/opendkim/keys/{{ mail_domain }}/{{ opendkim_selector }}.private"
     owner: opendkim
     group: opendkim
     mode: '0600'
@@ -36,8 +36,8 @@
       Syslog                  yes
       UMask                   002
       OversignHeaders         From
-      Domain                  {{ primary_domain }}
-      KeyFile                 {{ opendkim_key_dir }}/{{ opendkim_selector }}.private
+      Domain                  {{ mail_domain }}
+      KeyFile                 /etc/opendkim/keys/{{ mail_domain }}/{{ opendkim_selector }}.private
       Selector                {{ opendkim_selector }}
       Socket                  {{ opendkim_socket }}
       Canonicalization        relaxed/simple

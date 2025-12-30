@@ -1,8 +1,17 @@
+# Hvilket hostnavn maskinen selv har (din VPS' FQDN)
 mail_domain: "slushice.femto.dk"
-primary_domain: "slushice.femto.dk"
-postmaster_email: "postmaster@slushice.femto.dk"
-letsencrypt_email: "ole@slushice.femto.dk"
 
+# Domæner som Postfix/Dovecot skal modtage post for
+hosted_domains:
+  - "slushice.femto.dk"
+
+# Let's Encrypt / cert-navn (SAN-cert for disse domæner udstedes på mail.femto.dk)
+tls_cert_name: "mail.femto.dk"
+letsencrypt_email: "ole@femto.dk"
+letsencrypt_domains:
+  - "mail.femto.dk"
+
+# Åbne porte i firewalld
 open_ports:
   - 22
   - 25
@@ -10,23 +19,27 @@ open_ports:
   - 587
   - 993
 
+# Postfix
 postfix_mynetworks: "127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
 postfix_message_size_limit: 20240000
 postfix_rbls:
   - "zen.spamhaus.org"
   - "bl.spamcop.net"
-postfix_mydestination:
-  - "{{ mail_domain }}"
-  - "localhost"
+# mydestination bliver alle hostede domæner + localhost
+postfix_mydestination: "{{ hosted_domains + ['localhost'] }}"
 
+# Dovecot (brug SAN-certet fra mail.femto.dk)
 dovecot_mail_location: "maildir:~/Maildir"
-dovecot_ssl_cert: "/etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem"
-dovecot_ssl_key: "/etc/letsencrypt/live/{{ mail_domain }}/privkey.pem"
+dovecot_ssl_cert: "/etc/letsencrypt/live/{{ tls_cert_name }}/fullchain.pem"
+dovecot_ssl_key:  "/etc/letsencrypt/live/{{ tls_cert_name }}/privkey.pem"
 
+# OpenDKIM – signér for alle hostede domæner
 opendkim_selector: "mail2025"
 opendkim_socket: "inet:8891@localhost"
-opendkim_key_dir: "/etc/opendkim/keys/{{ primary_domain }}"
+opendkim_key_root: "/etc/opendkim/keys"     # -> /etc/opendkim/keys/<domain>/
+opendkim_domains: "{{ hosted_domains }}"
 
+# Fail2ban
 fail2ban_bantime: "1h"
 fail2ban_findtime: "10m"
 fail2ban_maxretry: 6

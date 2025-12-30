@@ -1,6 +1,6 @@
 # {{ ansible_managed }}
 myhostname = {{ mail_domain }}
-mydomain = {{ primary_domain }}
+mydomain = {{ mail_domain }}
 myorigin = $mydomain
 mydestination = {{ postfix_mydestination | join(", ") }}
 mynetworks = {{ postfix_mynetworks }}
