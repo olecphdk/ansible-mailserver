@@ -1,5 +1,6 @@
 # Hvilket hostnavn maskinen selv har (din VPS' FQDN)
 mail_domain: "slushice.femto.dk"
+mail_hostname: "mail.femto.dk"
 
 # Domæner som Postfix/Dovecot skal modtage post for
 hosted_domains:
@@ -36,8 +37,8 @@ dovecot_ssl_key:  "/etc/letsencrypt/live/{{ tls_cert_name }}/privkey.pem"
 # OpenDKIM – signér for alle hostede domæner
 opendkim_selector: "mail2025"
 opendkim_socket: "inet:8891@localhost"
-opendkim_key_root: "/etc/opendkim/keys"     # -> /etc/opendkim/keys/<domain>/
-opendkim_domains: "{{ hosted_domains }}"
+#opendkim_key_root: "/etc/opendkim/keys"     # -> /etc/opendkim/keys/<domain>/
+#opendkim_domains: "{{ hosted_domains }}"
 
 # Fail2ban
 fail2ban_bantime: "1h"
