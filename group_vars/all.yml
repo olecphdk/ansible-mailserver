@@ -1,16 +1,16 @@
 # Hvilket hostnavn maskinen selv har (din VPS' FQDN)
 mail_domain: "slushice.femto.dk"
-mail_hostname: "mail.femto.dk"
 
 # Domæner som Postfix/Dovecot skal modtage post for
 hosted_domains:
   - "slushice.femto.dk"
 
 # Let's Encrypt / cert-navn (SAN-cert for disse domæner udstedes på mail.femto.dk)
-tls_cert_name: "mail.femto.dk"
+tls_cert_name: "slushice.femto.dk"
 letsencrypt_email: "ole@femto.dk"
 letsencrypt_domains:
-  - "mail.femto.dk"
+  - "slushice.femto.dk"
+  - "femto.dk"
 
 # Åbne porte i firewalld
 open_ports:

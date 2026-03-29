@@ -8,7 +8,7 @@
 - name: Ensure mailname file
   copy:
     dest: /etc/mailname
-    content: "{{ mail_hostname }}\n"
+    content: "{{ mail_domain }}\n"
     owner: root
     group: root
     mode: "0644"

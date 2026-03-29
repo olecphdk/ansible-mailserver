@@ -1,6 +1,5 @@
 # {{ ansible_managed }}
-myhostname = {{ mail_hostname }}
-#mydomain = {{ mail_domain }}
+myhostname = {{ mail_domain }}
 myorigin = $myhostname
 mydestination = {{ postfix_mydestination | join(", ") }}
 mynetworks = {{ postfix_mynetworks }}
@@ -10,7 +9,7 @@ message_size_limit = {{ postfix_message_size_limit }}
 mailbox_size_limit = 0
 append_dot_mydomain = no
 mailbox_transport = lmtp:unix:private/dovecot-lmtp
-smtpd_banner = {{ mail_hostname }} ESMTP
+smtpd_banner = {{ mail_domain }} ESMTP
 
 # TLS
 smtpd_tls_cert_file = /etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem
@@ -36,5 +35,3 @@ milter_default_action = accept
 milter_protocol = 6
 smtpd_milters = inet:localhost:8891
 non_smtpd_milters = inet:localhost:8891
-
-smtpd_banner = {{ mail_hostname }} ESMTP
