@@ -74,10 +74,10 @@ Before changing MX, verify outbound delivery directly from slushice:
 ```bash
 nc localhost 25 <<EOF
 EHLO slushice.femto.dk
-MAIL FROM:<ole@femto.dk>
+MAIL FROM:<user@femto.dk>
 RCPT TO:<external-test-address>
 DATA
-From: Ole <ole@femto.dk>
+From: Test User <user@femto.dk>
 To: <external-test-address>
 Subject: slushice outbound test
 
