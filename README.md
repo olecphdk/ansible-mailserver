@@ -15,6 +15,24 @@ Infrastructure-as-Code for the personal mail server on AlmaLinux using Postfix, 
 
 `slushice.femto.dk` is the infrastructure hostname. User-facing addresses use `@femto.dk`.
 
+## System updates
+
+Normal configuration runs do not upgrade all AlmaLinux packages. The full package update task is tagged with both `never` and `updates`, so it only runs when explicitly requested.
+
+Run system updates with:
+
+```bash
+ansible-playbook playbooks/setup-mailserver.yml --tags updates
+```
+
+A normal configuration run remains:
+
+```bash
+ansible-playbook playbooks/setup-mailserver.yml
+```
+
+This keeps OS patching separate from ordinary mail configuration changes, making failures and regressions easier to attribute.
+
 ## Migration status
 
 The server is being tested in parallel with Proton Mail. Proton remains the production MX for `femto.dk`; changing MX is a separate cutover step and is intentionally not automated here.
