@@ -23,33 +23,30 @@
   copy:
     dest: /etc/fail2ban/jail.d/slushice.conf
     content: |
+      [DEFAULT]
+      bantime = {{ fail2ban_bantime }}
+      findtime = {{ fail2ban_findtime }}
+      maxretry = {{ fail2ban_maxretry }}
+
       [sshd]
       enabled = true
       port    = ssh
-      logpath = %(sshd_log)s
       backend = systemd
-      maxretry = {{ fail2ban_maxretry }}
 
       [postfix]
-      enabled  = true
-      port     = smtp,ssmtp,submission
-      logpath  = /var/log/maillog
-      backend  = systemd
-      maxretry = {{ fail2ban_maxretry }}
+      enabled = true
+      port    = smtp,ssmtp,submission
+      backend = systemd
 
       [postfix-sasl]
-      enabled  = true
-      port     = smtp,ssmtp,submission
-      logpath  = /var/log/maillog
-      backend  = systemd
-      maxretry = {{ fail2ban_maxretry }}
+      enabled = true
+      port    = smtp,ssmtp,submission
+      backend = systemd
 
       [dovecot]
       enabled = true
       port    = pop3,pop3s,imap,imaps,submission,465,sieve
-      logpath = /var/log/maillog
       backend = systemd
-      maxretry = {{ fail2ban_maxretry }}
   notify: Restart fail2ban
 
 - name: Ensure fail2ban is running
@@ -57,4 +54,3 @@
     name: fail2ban
     state: started
     enabled: true
-

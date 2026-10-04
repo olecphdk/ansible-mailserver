@@ -33,6 +33,28 @@ ansible-playbook playbooks/setup-mailserver.yml
 
 This keeps OS patching separate from ordinary mail configuration changes, making failures and regressions easier to attribute.
 
+## Fail2ban
+
+Fail2ban uses the systemd journal backend on AlmaLinux. The jail configuration therefore does not set file-based `logpath` values.
+
+The common policy is controlled by:
+
+```yaml
+fail2ban_bantime: "1h"
+fail2ban_findtime: "10m"
+fail2ban_maxretry: 6
+```
+
+These values are applied through the jail `[DEFAULT]` section to SSH, Postfix, Postfix SASL and Dovecot.
+
+Verify after deployment with:
+
+```bash
+sudo fail2ban-client status
+sudo fail2ban-client status sshd
+sudo fail2ban-client status postfix-sasl
+```
+
 ## Migration status
 
 The server is being tested in parallel with Proton Mail. Proton remains the production MX for `femto.dk`; changing MX is a separate cutover step and is intentionally not automated here.
