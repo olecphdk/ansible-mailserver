@@ -6,11 +6,17 @@ hosted_domains:
   - "slushice.femto.dk"
   - "femto.dk"
 
-# Let's Encrypt / cert-navn (SAN-cert for disse domæner udstedes på mail.femto.dk)
+# Let's Encrypt / cert-navn
 tls_cert_name: "slushice.femto.dk"
 letsencrypt_email: "ole@femto.dk"
 letsencrypt_domains:
   - "slushice.femto.dk"
+
+# Public DNS desired state during Proton -> slushice migration.
+# DNS is currently managed outside Ansible at one.com.
+# Keep Proton authorised while slushice is tested in parallel.
+femto_spf_record: "v=spf1 ip4:135.181.106.207 include:_spf.protonmail.ch mx ~all"
+femto_dmarc_record: "v=DMARC1; p=none"
 
 # Åbne porte i firewalld
 open_ports:
@@ -29,12 +35,12 @@ postfix_rbls:
 # mydestination bliver alle hostede domæner + localhost
 postfix_mydestination: "{{ hosted_domains + ['localhost'] }}"
 
-# Dovecot (brug SAN-certet fra mail.femto.dk)
+# Dovecot
 dovecot_mail_location: "maildir:~/Maildir"
 dovecot_ssl_cert: "/etc/letsencrypt/live/{{ tls_cert_name }}/fullchain.pem"
 dovecot_ssl_key:  "/etc/letsencrypt/live/{{ tls_cert_name }}/privkey.pem"
 
-# OpenDKIM – signér for alle hostede domæner
+# OpenDKIM - signér for alle hostede domæner
 opendkim_selector: "mail2025"
 opendkim_socket: "inet:8891@localhost"
 #opendkim_key_root: "/etc/opendkim/keys"     # -> /etc/opendkim/keys/<domain>/
