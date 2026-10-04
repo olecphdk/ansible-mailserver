@@ -55,6 +55,25 @@ sudo fail2ban-client status sshd
 sudo fail2ban-client status postfix-sasl
 ```
 
+## TLS certificates
+
+TLS certificate identity is kept separate from the server/mail-domain variables:
+
+```yaml
+mail_domain: "slushice.femto.dk"
+tls_cert_name: "slushice.femto.dk"
+letsencrypt_domains:
+  - "slushice.femto.dk"
+```
+
+Certbot uses `tls_cert_name` as the certificate lineage name and requests every name listed in `letsencrypt_domains`. Postfix and Dovecot both read the certificate from:
+
+```text
+/etc/letsencrypt/live/<tls_cert_name>/
+```
+
+This allows certificate names/SANs to change independently of the Postfix hostname configuration.
+
 ## Migration status
 
 The server is being tested in parallel with Proton Mail. Proton remains the production MX for `femto.dk`; changing MX is a separate cutover step and is intentionally not automated here.
