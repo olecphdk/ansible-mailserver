@@ -7,6 +7,9 @@
   dnf:
     name: "*"
     state: latest
+  tags:
+    - never
+    - updates
 
 - name: Install base packages
   dnf:
