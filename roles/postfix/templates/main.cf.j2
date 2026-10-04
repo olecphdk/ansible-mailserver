@@ -12,8 +12,8 @@ mailbox_transport = lmtp:unix:private/dovecot-lmtp
 smtpd_banner = {{ mail_domain }} ESMTP
 
 # TLS
-smtpd_tls_cert_file = /etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem
-smtpd_tls_key_file  = /etc/letsencrypt/live/{{ mail_domain }}/privkey.pem
+smtpd_tls_cert_file = /etc/letsencrypt/live/{{ tls_cert_name }}/fullchain.pem
+smtpd_tls_key_file  = /etc/letsencrypt/live/{{ tls_cert_name }}/privkey.pem
 smtpd_use_tls = yes
 smtpd_tls_security_level = may
 smtpd_sasl_auth_enable = yes

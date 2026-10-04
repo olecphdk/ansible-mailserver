@@ -7,9 +7,10 @@
   command: >
     certbot certonly --standalone --agree-tos --non-interactive
     --email {{ letsencrypt_email }}
-    -d {{ mail_domain }}
+    --cert-name {{ tls_cert_name }}
+    --domains {{ letsencrypt_domains | join(',') }}
   args:
-    creates: "/etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem"
+    creates: "/etc/letsencrypt/live/{{ tls_cert_name }}/fullchain.pem"
   notify:
     - Reload Postfix
     - Reload Dovecot
