@@ -74,6 +74,28 @@ Certbot uses `tls_cert_name` as the certificate lineage name and requests every 
 
 This allows certificate names/SANs to change independently of the Postfix hostname configuration.
 
+## SMTP services
+
+Public SMTP on port 25 is for server-to-server mail delivery and does not offer SMTP AUTH.
+
+Client submission uses port 587 with mandatory TLS and Dovecot SASL authentication:
+
+```text
+25  -> SMTP delivery, no AUTH
+587 -> STARTTLS + AUTH for mail clients
+993 -> TLS + Dovecot authentication for IMAP
+```
+
+The submission service explicitly enables `smtpd_sasl_auth_enable=yes` in `master.cf`, while the global Postfix setting keeps AUTH disabled by default.
+
+After deployment, verify that port 25 does not advertise AUTH:
+
+```bash
+printf 'EHLO test\r\nQUIT\r\n' | nc localhost 25
+```
+
+The response should not contain an `AUTH` capability.
+
 ## Migration status
 
 The server is being tested in parallel with Proton Mail. Proton remains the production MX for `femto.dk`; changing MX is a separate cutover step and is intentionally not automated here.

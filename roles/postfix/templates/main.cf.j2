@@ -16,7 +16,10 @@ smtpd_tls_cert_file = /etc/letsencrypt/live/{{ tls_cert_name }}/fullchain.pem
 smtpd_tls_key_file  = /etc/letsencrypt/live/{{ tls_cert_name }}/privkey.pem
 smtpd_use_tls = yes
 smtpd_tls_security_level = may
-smtpd_sasl_auth_enable = yes
+
+# SASL defaults. Authentication is disabled on the public SMTP service (25)
+# and explicitly enabled for the submission service (587) in master.cf.
+smtpd_sasl_auth_enable = no
 smtpd_sasl_type = dovecot
 smtpd_sasl_path = private/auth
 smtpd_sasl_security_options = noanonymous
