@@ -55,6 +55,37 @@ sudo fail2ban-client status sshd
 sudo fail2ban-client status postfix-sasl
 ```
 
+## Dovecot listeners and authentication
+
+Dovecot currently uses the system PAM password database and the system passwd user database. The distro-provided `auth-system.conf.ext` include is kept as the single source of the PAM/passwd configuration; Ansible only sets:
+
+```text
+auth_username_format = %n
+```
+
+Dovecot is restricted to IMAP plus LMTP:
+
+```text
+protocols = imap lmtp
+```
+
+POP3 is disabled, and the plaintext IMAP listener on port 143 is disabled. Client IMAP is exposed only as implicit TLS on port 993. LMTP remains available through the Unix socket used by Postfix.
+
+Verify after deployment:
+
+```bash
+sudo doveconf -n | grep -A8 -E '^(passdb|userdb|auth_username_format|protocols)'
+sudo ss -ltnp | grep -E ':(110|143|993|995)\\b'
+```
+
+Expected TCP listener:
+
+```text
+993
+```
+
+The separate mail-password migration is intentionally not part of this change.
+
 ## TLS certificates
 
 TLS certificate identity is kept separate from the server/mail-domain variables:
