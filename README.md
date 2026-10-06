@@ -57,11 +57,54 @@ sudo fail2ban-client status postfix-sasl
 
 ## Dovecot listeners and authentication
 
-Dovecot currently uses the system PAM password database and the system passwd user database. The distro-provided `auth-system.conf.ext` include is kept as the single source of the PAM/passwd configuration; Ansible only sets:
+Dovecot uses a separate mail password instead of the Linux/PAM password. Authentication is split deliberately:
 
 ```text
-auth_username_format = %n
+passdb -> /etc/dovecot/users
+userdb -> system passwd database
 ```
+
+The passwd-file contains only the mail authentication credential. Dovecot still obtains UID, GID and home directory from the Unix account, so mail remains in `/home/ole/Maildir`.
+
+The login name remains `ole` for now. `auth_username_format = %n` also means a client-supplied domain is stripped before lookup; tightening this to a full mail address is a separate change.
+
+The password hash is not stored in Git. On the initial migration, generate a new mail-only password hash on slushice:
+
+```bash
+sudo doveadm pw -s BLF-CRYPT
+```
+
+Copy the complete result, including the `{BLF-CRYPT}` prefix, into an encrypted vars file on the Ansible controller:
+
+```bash
+mkdir -p ~/.config/ansible-mailserver
+ansible-vault create ~/.config/ansible-mailserver/mail-secrets.yml
+```
+
+The encrypted file should contain:
+
+```yaml
+dovecot_mail_password_hash: '{BLF-CRYPT}$2y$...'
+```
+
+Run the first migration with:
+
+```bash
+ansible-playbook playbooks/setup-mailserver.yml \
+  --ask-vault-pass \
+  --extra-vars "@$HOME/.config/ansible-mailserver/mail-secrets.yml"
+```
+
+After `/etc/dovecot/users` exists, ordinary playbook runs do not require the secret file and leave the existing password hash unchanged. To rotate the mail password, generate a new hash and rerun with the external vars file.
+
+Verify authentication on the server:
+
+```bash
+sudo doveadm auth test ole
+sudo doveconf -n | grep -A8 -E '^(passdb|userdb|auth_username_format|protocols)'
+```
+
+The effective authentication configuration should contain one `passwd-file` passdb and one system `passwd` userdb, with no PAM passdb.
 
 Dovecot is restricted to IMAP plus LMTP:
 
@@ -71,10 +114,9 @@ protocols = imap lmtp
 
 POP3 is disabled, and the plaintext IMAP listener on port 143 is disabled. Client IMAP is exposed only as implicit TLS on port 993. LMTP remains available through the Unix socket used by Postfix.
 
-Verify after deployment:
+Verify listeners:
 
 ```bash
-sudo doveconf -n | grep -A8 -E '^(passdb|userdb|auth_username_format|protocols)'
 sudo ss -ltnp | grep -E ':(110|143|993|995)\\b'
 ```
 
@@ -84,7 +126,7 @@ Expected TCP listener:
 993
 ```
 
-The separate mail-password migration is intentionally not part of this change.
+After changing the Dovecot password, update both incoming IMAP and outgoing SMTP authentication in K-9 and test ports 993 and 587. The Unix password must not be locked until both tests pass.
 
 ## TLS certificates
 
