@@ -19,6 +19,65 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - AUTH CONFIG"
   notify: Restart Dovecot
 
+- name: Check Dovecot password file
+  stat:
+    path: /etc/dovecot/users
+  register: dovecot_users_file
+
+- name: Require a separate mail password hash for initial migration
+  assert:
+    that:
+      - dovecot_users_file.stat.exists or (dovecot_mail_password_hash | default('') | length > 0)
+    fail_msg: >-
+      /etc/dovecot/users does not exist. Generate a Dovecot password hash with
+      'doveadm pw -s BLF-CRYPT' and provide it as dovecot_mail_password_hash
+      through an external Ansible Vault/extra-vars file.
+  no_log: true
+
+- name: Install Dovecot mail password file
+  copy:
+    dest: /etc/dovecot/users
+    owner: root
+    group: dovecot
+    mode: '0640'
+    content: |
+      ole:{{ dovecot_mail_password_hash }}
+  when: (dovecot_mail_password_hash | default('') | length) > 0
+  no_log: true
+  notify: Restart Dovecot
+
+- name: Protect Dovecot mail password file
+  file:
+    path: /etc/dovecot/users
+    owner: root
+    group: dovecot
+    mode: '0640'
+
+- name: Disable PAM password authentication
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-auth.conf
+    regexp: '^#?!include\s+auth-system\.conf\.ext\s*$'
+    line: '#!include auth-system.conf.ext'
+  notify: Restart Dovecot
+
+- name: Configure separate Dovecot mail authentication
+  copy:
+    dest: /etc/dovecot/conf.d/99-ansible-auth.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      # Managed by Ansible - do not edit manually
+      passdb {
+        driver = passwd-file
+        args = username_format=%n /etc/dovecot/users
+      }
+
+      userdb {
+        driver = passwd
+      }
+  notify: Restart Dovecot
+
 - name: Restrict Dovecot protocols and listeners
   copy:
     dest: /etc/dovecot/conf.d/99-ansible-protocols.conf
@@ -96,6 +155,10 @@
     # - arthur
   args:
     creates: "/home/{{ item }}/Maildir"
+
+- name: Validate Dovecot configuration
+  command: doveconf -n
+  changed_when: false
 
 - name: Ensure Dovecot is running and enabled
   service:
