@@ -64,9 +64,15 @@ passdb -> /etc/dovecot/users
 userdb -> system passwd database
 ```
 
-The passwd-file contains only the mail authentication credential. Dovecot still obtains UID, GID and home directory from the Unix account, so mail remains in `/home/ole/Maildir`.
+The passwd-file contains only the mail authentication credential. Dovecot still obtains UID, GID and home directory from the Unix account, so mail remains in `/home/<dovecot_user>/Maildir`.
 
-The login name remains `ole` for now. `auth_username_format = %n` also means a client-supplied domain is stripped before lookup; tightening this to a full mail address is a separate change.
+The account is configured once through `dovecot_user` in `group_vars/all.yml`. By default it follows `ansible_user`, so the role contains no hard-coded personal username:
+
+```yaml
+dovecot_user: "{{ ansible_user }}"
+```
+
+The same value is currently used as both Dovecot login name and Unix account. `auth_username_format = %n` means a client-supplied domain is stripped before lookup; tightening this to a full mail address is a separate change.
 
 The password hash is not stored in Git. On the initial migration, generate a new mail-only password hash on slushice:
 
@@ -100,7 +106,7 @@ After `/etc/dovecot/users` exists, ordinary playbook runs do not require the sec
 Verify authentication on the server:
 
 ```bash
-sudo doveadm auth test ole
+sudo doveadm auth test <dovecot_user>
 sudo doveconf -n | grep -A8 -E '^(passdb|userdb|auth_username_format|protocols)'
 ```
 
@@ -127,6 +133,23 @@ Expected TCP listener:
 ```
 
 After changing the Dovecot password, update both incoming IMAP and outgoing SMTP authentication in K-9 and test ports 993 and 587. The Unix password must not be locked until both tests pass.
+
+Once both mail tests succeed, lock the Unix password for the Dovecot account:
+
+```bash
+sudo passwd -l <dovecot_user>
+sudo passwd -S <dovecot_user>
+```
+
+The status should show `L` for the account.
+
+Keep the current SSH session open and verify a fresh SSH login from the Ansible controller using the configured SSH key. For example:
+
+```bash
+ssh -i ~/.ssh/id_ed25519 <dovecot_user>@<mail-server>
+```
+
+Finally, repeat one IMAP sync and one SMTP submission from the mail client. This confirms that mail authentication is independent of the now-locked Unix password.
 
 ## TLS certificates
 
