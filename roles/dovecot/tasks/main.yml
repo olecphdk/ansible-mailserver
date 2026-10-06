@@ -26,7 +26,7 @@
     group: root
     mode: '0644'
     content: |
-      # {{ ansible_managed }}
+      # Managed by Ansible - do not edit manually
       protocols = imap lmtp
 
       service imap-login {
