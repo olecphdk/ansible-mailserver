@@ -30,7 +30,7 @@
       - dovecot_users_file.stat.exists or (dovecot_mail_password_hash | default('') | length > 0)
     fail_msg: >-
       /etc/dovecot/users does not exist. Generate a Dovecot password hash with
-      'doveadm pw -s BLF-CRYPT' and provide it as dovecot_mail_password_hash
+      'doveadm pw' and provide it as dovecot_mail_password_hash
       through an external Ansible Vault/extra-vars file.
   no_log: true
 
@@ -41,7 +41,7 @@
     group: dovecot
     mode: '0640'
     content: |
-      ole:{{ dovecot_mail_password_hash }}
+      ole:{{ dovecot_mail_password_hash | default('') }}
   when: (dovecot_mail_password_hash | default('') | length) > 0
   no_log: true
   notify: Restart Dovecot
