@@ -71,10 +71,10 @@ The login name remains `ole` for now. `auth_username_format = %n` also means a c
 The password hash is not stored in Git. On the initial migration, generate a new mail-only password hash on slushice:
 
 ```bash
-sudo doveadm pw -s BLF-CRYPT
+sudo doveadm pw
 ```
 
-Copy the complete result, including the `{BLF-CRYPT}` prefix, into an encrypted vars file on the Ansible controller:
+Copy the complete result, including its `{SCHEME}` prefix, into an encrypted vars file on the Ansible controller:
 
 ```bash
 mkdir -p ~/.config/ansible-mailserver
@@ -84,7 +84,7 @@ ansible-vault create ~/.config/ansible-mailserver/mail-secrets.yml
 The encrypted file should contain:
 
 ```yaml
-dovecot_mail_password_hash: '{BLF-CRYPT}$2y$...'
+dovecot_mail_password_hash: '{SCHEME}...'
 ```
 
 Run the first migration with:
