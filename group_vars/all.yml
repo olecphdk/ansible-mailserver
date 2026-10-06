@@ -36,6 +36,8 @@ postfix_rbls:
 postfix_mydestination: "{{ hosted_domains + ['localhost'] }}"
 
 # Dovecot
+# Mail login and Unix account that owns the Maildir.
+dovecot_user: "{{ ansible_user }}"
 dovecot_mail_location: "maildir:~/Maildir"
 dovecot_ssl_cert: "/etc/letsencrypt/live/{{ tls_cert_name }}/fullchain.pem"
 dovecot_ssl_key:  "/etc/letsencrypt/live/{{ tls_cert_name }}/privkey.pem"
