@@ -41,7 +41,7 @@
     group: dovecot
     mode: '0640'
     content: |
-      ole:{{ dovecot_mail_password_hash | default('') }}
+      {{ dovecot_user }}:{{ dovecot_mail_password_hash | default('') }}
   when: (dovecot_mail_password_hash | default('') | length) > 0
   no_log: true
   notify: Restart Dovecot
@@ -145,16 +145,12 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - LMTP for Postfix"
   notify: Restart Dovecot
 
-- name: Ensure Maildir exists for system users
-  command: "doveadm mailbox create -u {{ item }} INBOX"
+- name: Ensure Maildir exists for Dovecot user
+  command: "doveadm mailbox create -u {{ dovecot_user }} INBOX"
   become: true
-  become_user: "{{ item }}"
-  loop:
-    - ole
-    # - kia
-    # - arthur
+  become_user: "{{ dovecot_user }}"
   args:
-    creates: "/home/{{ item }}/Maildir"
+    creates: "/home/{{ dovecot_user }}/Maildir"
 
 - name: Validate Dovecot configuration
   command: doveconf -n
